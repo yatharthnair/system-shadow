@@ -2,6 +2,7 @@
 export {
   BossColors,
   CategoryColors,
+  ChartColors,
   Colors,
   DifficultyColors,
   Gradients,

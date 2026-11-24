@@ -168,3 +168,11 @@ CREATE TABLE weekly_challenges (
 
 ALTER TABLE player ADD COLUMN equipped_title_id TEXT;
 `;
+
+// v6: app settings (notification preferences, …) as JSON values keyed by name.
+export const CREATE_APP_SETTINGS_TABLE = `
+CREATE TABLE app_settings (
+  key TEXT PRIMARY KEY NOT NULL,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);`;

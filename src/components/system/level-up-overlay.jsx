@@ -48,7 +48,7 @@ export function LevelUpOverlay({ notice, onDismiss }) {
           System Notice
         </AppText>
         <LightSweep>
-          <AppText variant="display" style={styles.headline}>
+          <AppText variant="display" style={styles.headline} numberOfLines={1} adjustsFontSizeToFit>
             LEVEL UP
           </AppText>
         </LightSweep>

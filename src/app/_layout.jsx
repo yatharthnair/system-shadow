@@ -6,9 +6,11 @@ import { StyleSheet, View } from 'react-native';
 import { BootErrorView } from '@/components/system/boot-error-view';
 import { SystemNoticeHost } from '@/components/system/system-notice-host';
 import { Colors, FontFamily } from '@/constants/theme';
+import { configureNotificationHandler } from '@/features/notifications/notification-scheduler';
 import { retryAppBootstrap, useAppBootstrap } from '@/hooks/use-app-bootstrap';
 
 SplashScreen.preventAutoHideAsync();
+configureNotificationHandler();
 
 const navigationTheme = {
   ...DarkTheme,
@@ -51,6 +53,7 @@ export default function RootLayout() {
             <Stack.Screen name="quest/[questId]" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="quest/history" options={{ title: 'Quest Log' }} />
             <Stack.Screen name="inventory" options={{ title: 'Inventory' }} />
+            <Stack.Screen name="analytics" options={{ title: 'Analytics' }} />
             <Stack.Screen
               name="item/[itemKey]"
               options={{

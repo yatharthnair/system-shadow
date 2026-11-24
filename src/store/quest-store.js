@@ -11,6 +11,7 @@ import {
   updateQuest,
 } from '@/features/quests/quest-service';
 
+import { emitActivityEvent } from './activity-events';
 import { applyActivityOutcome } from './apply-activity-outcome';
 import { useRewardStore } from './reward-store';
 
@@ -94,6 +95,9 @@ async function runForQuest(set, get, questId, operation) {
   try {
     const outcome = await operation();
     applyActivityOutcome(outcome);
+    if (outcome.status === 'completed') {
+      emitActivityEvent({ type: 'quest-completed', title: outcome.completion.questTitle, xp: outcome.completion.xpAwarded });
+    }
     await Promise.all([get().refresh(), refreshRewards()]);
     return outcome;
   } finally {

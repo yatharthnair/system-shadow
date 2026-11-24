@@ -115,3 +115,16 @@ export const BossColors = {
   glow: 'rgba(255, 77, 109, 0.45)',
   hpTrack: '#2A1220',
 };
+
+/**
+ * Chart colors. Categorical series take slots in fixed order (never cycled); validated with the
+ * dataviz palette checker against the dark chart surface (#080E1C): lightness band, chroma floor,
+ * CVD separation (worst adjacent ΔE 9.4) and contrast all pass. Sequential = one hue, dark → bright.
+ */
+export const ChartColors = {
+  series: ['#3987e5', '#d95926', '#199e70'],
+  surface: Palette.navy900,
+  grid: Palette.navy600,
+  wash: 'rgba(57, 135, 229, 0.10)',
+  sequential: [Palette.navy700, 'rgba(57, 135, 229, 0.35)', 'rgba(57, 135, 229, 0.6)', 'rgba(57, 135, 229, 0.85)', '#5aa0f0'],
+};

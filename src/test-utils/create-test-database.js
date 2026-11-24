@@ -14,7 +14,10 @@ function toPlainRow(row) {
  * Backed by Node's built-in `node:sqlite`, so tests run the real SQL, schema and migrations.
  */
 export function createTestDatabase() {
-  const connection = new DatabaseSync(':memory:');
+  // Match expo-sqlite on device, which leaves SQLite's default of foreign keys OFF (its iOS build
+  // doesn't set SQLITE_DEFAULT_FOREIGN_KEYS). node:sqlite enables them by default, which would make
+  // tests stricter than production.
+  const connection = new DatabaseSync(':memory:', { enableForeignKeyConstraints: false });
   let inTransaction = false;
 
   async function runInTransaction(beginStatement, task) {

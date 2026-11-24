@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BorderWidth, Colors, ComponentTokens, Glow, Gradients } from '@/constants/theme';
+import { BorderWidth, Colors, ComponentTokens, Glow, Gradients, Spacing } from '@/constants/theme';
 
 import { TabBarButton } from './tab-bar-button';
 
@@ -62,9 +62,13 @@ export function SystemTabBar({ state, descriptors, navigation }) {
 const styles = StyleSheet.create({
   positioner: {
     position: 'absolute',
-    left: horizontalInset,
-    right: horizontalInset,
+    left: 0,
+    right: 0,
     bottom: 0,
+    paddingHorizontal: horizontalInset,
+    paddingTop: Spacing.xl,
+    // Fades scrolled content out beneath the floating bar instead of showing it in the gap below.
+    backgroundImage: `linear-gradient(180deg, transparent 0%, ${Colors.background} 55%)`,
   },
   bar: {
     height,

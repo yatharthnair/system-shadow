@@ -26,7 +26,8 @@ src/app/                 Routes only
   (tabs)/*.jsx           index (Status/Dashboard), quests, player, challenges, achievements
   quest/new · quest/[questId] · quest/history   Quest editor modals and the quest log
   inventory · item/[itemKey]                      Inventory (items, titles, milestones, log) and item sheet
-  settings.jsx           Pushed from the Dashboard header
+  analytics.jsx          Charts (pushed from Dashboard / Settings)
+  settings.jsx           Notification settings (pushed from the Dashboard header)
 src/constants/           Design tokens: colors, typography, spacing, effects, components; theme.js re-exports all
 src/components/
   common/                Design-system primitives (AppText, GlowPanel, ScreenContainer, ScalePressable, …)
@@ -108,6 +109,50 @@ Data flow: component → store action → feature rule + repository → SQLite.
 - UI: `useRewardStore` holds the overview; `applyActivityOutcome` syncs XP and queues notices (order: level-up →
   boss defeat → achievements → reward banners → attribute growth). Cinematics animate transform/opacity only,
   play once (no infinite loops), cancel on unmount, honour Reduce Motion (`useReducedMotion`), and tap to skip.
+
+## Analytics (`src/features/analytics/`)
+
+- Local data only. `analytics-repository.js` reads standing activity (undone completions and reversed XP
+  excluded; legacy migration XP skipped). XP is dated by when it was earned: quest `completed_at`, reward
+  `unlocked_at`, else the ledger timestamp.
+- `buildAnalytics(data, { now, rangeDays })` is pure; ranges are 7/30/90 days of local dates. Charts bucket by
+  day up to 31 days, by ISO week beyond. Completion rates count only quests that existed and were scheduled
+  that day/week; averages use finished periods only.
+- Charts are hand-built on react-native-svg (`components/charts/`), following the dataviz rules: categorical
+  series take `ChartColors.series` slots in fixed order (validated against the dark surface), one axis per chart,
+  legend for 2+ series, text in text tokens, tap/drag readouts, and a Table view on every chart card.
+
+## Notifications (`src/features/notifications/`)
+
+- Local notifications only (`expo-notifications`, `enableRemoteNotifications: false`). No server, no push.
+- Notifications are **off by default**. Permission is requested only when the player turns them on in Settings;
+  if refused, they stay off and Settings links to iOS Settings. Never request permission at launch.
+- Reminders are a rolling 7-day plan of one-time notifications (`planScheduledNotifications`, pure), rebuilt
+  whenever quests, rewards or settings change (`useNotificationSync`, debounced). Content is computed at plan time
+  ("3 quests left"); reminders are skipped when there's nothing to do and never scheduled inside quiet hours.
+- `notification-scheduler.js` is the only module that touches expo-notifications. It only manages identifiers
+  prefixed `shadow:` and diffs against what's scheduled (no churn). Stay under iOS's 64 pending notifications.
+- Quest-completed and level-up events go through `store/activity-events.js` (avoids store import cycles). While the
+  app is open they go silently to Notification Center (the in-app cinematic already plays).
+- Notification weekdays use ISO numbering (1 = Monday) like quests; expo's WEEKLY trigger uses 1 = Sunday,
+  which is one reason the app uses DATE triggers.
+
+## Backup & restore (`src/features/backup/`)
+
+- JSON file with every app table (`BACKUP_TABLES`, parents first) + `schemaVersion`. Export via the iOS share
+  sheet; restore via `File.pickFileAsync`. All local.
+- Restore = one exclusive transaction: delete all, insert all, then `PRAGMA foreign_key_check`. Any unknown column,
+  constraint violation (e.g. duplicate active completion) or broken reference rolls back — current data untouched.
+  Only backups with the same schema version are accepted. Afterwards `reloadAppState()` reloads stores in place
+  (progression is re-verified against the ledger; rewards reconcile to the same set).
+- **Adding a table?** Add it to `BACKUP_TABLES` in dependency order, or it won't be backed up.
+- Foreign keys are declared in the schema but **not enforced at runtime** (expo-sqlite leaves SQLite's default OFF);
+  the test database matches this. Integrity comes from the services, unique indexes, and the restore check.
+
+## Brand assets
+
+`node scripts/generate-brand-assets.js` regenerates the app icon, launch-screen mark, Android adaptive layers and
+favicon procedurally (no dependencies). The iOS icon must stay opaque (App Store requirement).
 
 ## Tests
 

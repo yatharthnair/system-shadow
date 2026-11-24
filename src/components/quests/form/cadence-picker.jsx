@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/common/app-text';
-import { ScalePressable } from '@/components/common/scale-pressable';
 import { SegmentedControl } from '@/components/common/segmented-control';
-import { BorderWidth, Colors, Glow, Spacing } from '@/constants/theme';
-import { CADENCES_BY_KEY, WEEKDAYS } from '@/features/quests/quest-config';
+import { WeekdayToggles } from '@/components/common/weekday-toggles';
+import { Spacing } from '@/constants/theme';
+import { CADENCES_BY_KEY } from '@/features/quests/quest-config';
 
 const GROUP_OPTIONS = [
   { value: 'daily', label: 'Daily' },
@@ -22,30 +22,6 @@ const CADENCE_DESCRIPTIONS = {
   weekdays: 'Repeats on the days you choose.',
   once: 'Complete it once. Worth 2× XP.',
 };
-
-function WeekdayToggles({ selectedDays, onToggle }) {
-  return (
-    <View style={styles.weekdays}>
-      {WEEKDAYS.map((day) => {
-        const isSelected = selectedDays.includes(day.value);
-        return (
-          <ScalePressable
-            key={day.value}
-            onPress={() => onToggle(day.value)}
-            haptic="selection"
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: isSelected }}
-            accessibilityLabel={day.label}
-            style={[styles.day, isSelected && styles.daySelected]}>
-            <AppText variant="heading" color={isSelected ? 'highlightLight' : 'textMuted'} style={styles.dayLabel}>
-              {day.shortLabel}
-            </AppText>
-          </ScalePressable>
-        );
-      })}
-    </View>
-  );
-}
 
 /**
  * Daily / Weekly / Custom (specific days or one-time). Locked after creation, because
@@ -80,21 +56,6 @@ export function CadencePicker({ cadence, weekdays, isLocked, onChangeCadence, on
   );
 }
 
-const DAY_SIZE = 40;
-
 const styles = StyleSheet.create({
   container: { gap: Spacing.md },
-  weekdays: { flexDirection: 'row', justifyContent: 'space-between' },
-  day: {
-    width: DAY_SIZE,
-    height: DAY_SIZE,
-    borderRadius: DAY_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: BorderWidth.thin,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  daySelected: { borderColor: Colors.borderGlow, backgroundColor: Colors.highlightSoft, boxShadow: Glow.subtle },
-  dayLabel: { fontSize: 15 },
 });

@@ -8,6 +8,7 @@ import { ItemTile } from '@/components/inventory/item-tile';
 import { LevelMilestoneTrack } from '@/components/inventory/level-milestone-track';
 import { RewardLog } from '@/components/inventory/reward-log';
 import { TitleList } from '@/components/inventory/title-list';
+import { QuestEmptyState } from '@/components/quests/quest-empty-state';
 import { Colors, ComponentTokens, Spacing } from '@/constants/theme';
 import { usePlayerStore } from '@/store/player-store';
 import { useRewardStore } from '@/store/reward-store';
@@ -52,9 +53,10 @@ export default function InventoryScreen() {
             </View>
           </>
         ) : (
-          <AppText variant="body" color="textMuted">
-            Your inventory is empty. Clear weekly challenges, damage bosses and reach level milestones to earn items.
-          </AppText>
+          <QuestEmptyState
+            title="Inventory empty"
+            message="Clear weekly challenges, damage bosses and reach level milestones to earn items."
+          />
         )
       ) : null}
 

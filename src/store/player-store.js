@@ -38,6 +38,12 @@ export const usePlayerStore = create((set, get) => ({
    * committed, and queues level-up / attribute notices.
    * @param {Parameters<typeof awardXp>[0]} rewardInput
    */
+  /** Reloads everything from SQLite without changing hydration status (e.g. after a restore). */
+  reload: async () => {
+    const [profile, { state }] = await Promise.all([loadPlayerProfile(), loadProgression()]);
+    set({ ...profile, progression: buildProgressionSnapshot(state) });
+  },
+
   /** Re-reads name and equipped title (e.g. after a title is equipped, earned or revoked). */
   refreshProfile: async () => {
     set(await loadPlayerProfile());

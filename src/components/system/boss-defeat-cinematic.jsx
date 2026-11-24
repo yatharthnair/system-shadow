@@ -40,7 +40,7 @@ export function BossDefeatCinematic({ notice, onDismiss }) {
           Gate Cleared
         </AppText>
         <LightSweep>
-          <AppText variant="display" style={styles.headline}>
+          <AppText variant="display" style={styles.headline} numberOfLines={1} adjustsFontSizeToFit>
             BOSS DEFEATED
           </AppText>
         </LightSweep>

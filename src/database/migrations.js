@@ -2,6 +2,7 @@ import {
   ADD_PLAYER_PROFILE_COLUMNS,
   ADD_PLAYER_TOTAL_XP_COLUMN,
   ADD_XP_TRANSACTION_REVERSAL_COLUMNS,
+  CREATE_APP_SETTINGS_TABLE,
   CREATE_QUEST_TABLES,
   CREATE_REWARD_TABLES,
   CREATE_PLAYER_ATTRIBUTES_TABLE,
@@ -75,6 +76,10 @@ const MIGRATIONS = [
 
   async function addRewardSystem(db) {
     await db.execAsync(CREATE_REWARD_TABLES);
+  },
+
+  async function addAppSettings(db) {
+    await db.execAsync(CREATE_APP_SETTINGS_TABLE);
   },
 ];
 

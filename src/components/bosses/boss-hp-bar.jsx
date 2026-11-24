@@ -13,16 +13,22 @@ const MILESTONE_TICKS = [25, 50, 75];
  */
 export function BossHpBar({ progress, height = 14, accessibilityLabel }) {
   const remaining = useSharedValue(1);
+  const trackWidth = useSharedValue(0);
 
   useEffect(() => {
     remaining.set(withTiming(clamp(1 - progress, 0, 1), { duration: Motion.duration.slow * 2 }));
   }, [progress, remaining]);
 
-  const fillStyle = useAnimatedStyle(() => ({ width: `${remaining.get() * 100}%` }));
+  // Full-width fill slid with translateX: no layout work per frame.
+  const fillStyle = useAnimatedStyle(() => ({
+    opacity: trackWidth.get() > 0 ? 1 : 0,
+    transform: [{ translateX: -(1 - remaining.get()) * trackWidth.get() }],
+  }));
 
   return (
     <View
       style={[styles.track, { height }]}
+      onLayout={(event) => trackWidth.set(event.nativeEvent.layout.width)}
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamp(1 - progress, 0, 1) * 100) }}>
@@ -49,6 +55,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: {
+    width: '100%',
     height: '100%',
     backgroundImage: `linear-gradient(90deg, #B3123A 0%, ${BossColors.primary} 100%)`,
     boxShadow: `0 0 12px 0 ${BossColors.glow}`,

@@ -1,6 +1,7 @@
 import { buildNoticesFromEvents } from '@/features/progression/progression-notices';
 import { buildRewardNotices } from '@/features/rewards/reward-notices';
 
+import { emitActivityEvent } from './activity-events';
 import { usePlayerStore } from './player-store';
 import { useSystemNoticeStore } from './system-notice-store';
 
@@ -24,6 +25,7 @@ export function applyActivityOutcome({ progression, rewards }) {
   const levelUp = progressionNotices.filter((notice) => notice.kind === 'level-up');
   const attributeGrowth = progressionNotices.filter((notice) => notice.kind !== 'level-up');
   useSystemNoticeStore.getState().publishNotices([...levelUp, ...rewardNotices, ...attributeGrowth]);
+  for (const notice of levelUp) emitActivityEvent({ type: 'level-up', toLevel: notice.toLevel, rankUp: notice.rankUp });
   if (rewards?.events?.some((event) => event.reward.titleId || event.reward.titleReward)) {
     usePlayerStore.getState().refreshProfile();
   }

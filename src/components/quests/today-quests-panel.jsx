@@ -72,6 +72,10 @@ export function TodayQuestsPanel({ entranceIndex }) {
             </View>
           ))}
         </View>
+      ) : summary.overall.total === 0 ? (
+        <AppText variant="body" color="textMuted">
+          No quests scheduled today. Add one from the Quests tab.
+        </AppText>
       ) : (
         <AppText variant="body" color="success">
           All available quests cleared.

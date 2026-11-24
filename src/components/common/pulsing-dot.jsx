@@ -1,7 +1,10 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
+  useReducedMotion,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -10,11 +13,22 @@ import Animated, {
 
 import { Colors, Glow } from '@/constants/theme';
 
-/** A small "system online" indicator that slowly breathes. */
+/**
+ * A small "system online" indicator that slowly breathes. The loop runs only while its screen is
+ * focused (tabs stay mounted in the background) and never with Reduce Motion.
+ */
 export function PulsingDot({ color = Colors.highlight, size = 6 }) {
   const opacity = useSharedValue(1);
+  const isFocused = useIsFocused();
+  const reduceMotion = useReducedMotion();
+  const shouldAnimate = isFocused && !reduceMotion;
 
   useEffect(() => {
+    if (!shouldAnimate) {
+      cancelAnimation(opacity);
+      opacity.set(1);
+      return undefined;
+    }
     opacity.set(
       withRepeat(
         withTiming(0.35, { duration: 1400, easing: Easing.inOut(Easing.quad) }),
@@ -22,7 +36,8 @@ export function PulsingDot({ color = Colors.highlight, size = 6 }) {
         true,
       ),
     );
-  }, [opacity]);
+    return () => cancelAnimation(opacity);
+  }, [shouldAnimate, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
 
