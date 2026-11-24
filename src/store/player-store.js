@@ -38,10 +38,24 @@ export const usePlayerStore = create((set, get) => ({
    * committed, and queues level-up / attribute notices.
    * @param {Parameters<typeof awardXp>[0]} rewardInput
    */
+  /** Re-reads name and equipped title (e.g. after a title is equipped, earned or revoked). */
+  refreshProfile: async () => {
+    set(await loadPlayerProfile());
+  },
+
   awardXp: async (rewardInput) => {
     const outcome = await awardXp(rewardInput);
+    get().applyProgressionOutcome(outcome);
+    return outcome;
+  },
+
+  /**
+   * Syncs the snapshot with a committed progression outcome (from an award, a reversal, or a
+   * quest completion/undo) and queues any level-up / attribute notices it produced.
+   */
+  applyProgressionOutcome: (outcome) => {
+    if (!outcome) return;
     set({ progression: buildProgressionSnapshot(outcome.state) });
     useSystemNoticeStore.getState().publishNotices(buildNoticesFromEvents(outcome.events));
-    return outcome;
   },
 }));

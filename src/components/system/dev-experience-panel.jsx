@@ -6,6 +6,7 @@ import { GlowPanel } from '@/components/common/glow-panel';
 import { SystemButton } from '@/components/common/system-button';
 import { Spacing } from '@/constants/theme';
 import { usePlayerStore } from '@/store/player-store';
+import { useRewardStore } from '@/store/reward-store';
 
 let devRewardCounter = 0;
 function createDevRewardId() {
@@ -29,6 +30,8 @@ export function DevExperiencePanel({ entranceIndex }) {
     lastRewardRef.current = reward;
     try {
       const outcome = await awardXp(reward);
+      // XP can unlock level milestones and achievements; reconcile like any other activity.
+      await useRewardStore.getState().refresh();
       setLastResult(outcome.status === 'applied' ? `Applied ${reward.id}` : `Duplicate ignored: ${reward.id}`);
     } catch (error) {
       setLastResult(`Rejected: ${error.message}`);

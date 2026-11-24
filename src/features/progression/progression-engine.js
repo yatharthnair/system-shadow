@@ -1,6 +1,7 @@
 import { ATTRIBUTE_KEYS } from './attributes';
 import { ATTRIBUTE_LEVEL_CURVE, PLAYER_LEVEL_CURVE, RANKS } from './progression-config';
 import { getNextRank, getRankForLevel, validateRankTable } from './ranks';
+import { ProgressionError } from './progression-errors';
 import { createXpCurve } from './xp-curve';
 
 /**
@@ -76,6 +77,60 @@ export function applyXpReward(state, reward, rules = DEFAULT_PROGRESSION_RULES) 
         fromLevel: fromAttributeLevel,
         toLevel: toAttributeLevel,
         levelsGained: toAttributeLevel - fromAttributeLevel,
+      });
+    }
+  }
+
+  return { state: { totalXp: nextTotalXp, attributeXp: nextAttributeXp }, events };
+}
+
+/**
+ * Exactly cancels a previously applied reward (used when a quest completion is undone).
+ * Levels and ranks are derived, so they fall back precisely to where they would have been.
+ * Never mutates `state`. Throws if the reward was never applied (totals would go negative).
+ *
+ * @returns {{ state: object, events: Array<
+ *   | { type: 'player-level-down', fromLevel: number, toLevel: number, levelsLost: number }
+ *   | { type: 'rank-down', fromRank: string, toRank: string }
+ *   | { type: 'attribute-level-down', attributeKey: string, fromLevel: number, toLevel: number, levelsLost: number }
+ * > }}
+ */
+export function reverseXpReward(state, reward, rules = DEFAULT_PROGRESSION_RULES) {
+  const events = [];
+
+  const nextTotalXp = state.totalXp - reward.xp;
+  if (nextTotalXp < 0) {
+    throw new ProgressionError('REVERSAL_EXCEEDS_TOTAL', `Cannot reverse ${reward.xp} XP from a total of ${state.totalXp}`);
+  }
+  const fromLevel = rules.player.getLevelState(state.totalXp).level;
+  const toLevel = rules.player.getLevelState(nextTotalXp).level;
+  if (toLevel < fromLevel) {
+    events.push({ type: 'player-level-down', fromLevel, toLevel, levelsLost: fromLevel - toLevel });
+    const fromRank = getRankForLevel(fromLevel, rules.ranks).id;
+    const toRank = getRankForLevel(toLevel, rules.ranks).id;
+    if (fromRank !== toRank) events.push({ type: 'rank-down', fromRank, toRank });
+  }
+
+  const nextAttributeXp = { ...state.attributeXp };
+  for (const key of ATTRIBUTE_KEYS) {
+    const removed = reward.attributeXp[key] ?? 0;
+    if (removed === 0) continue;
+
+    const previousTotal = state.attributeXp[key] ?? 0;
+    if (previousTotal - removed < 0) {
+      throw new ProgressionError('REVERSAL_EXCEEDS_TOTAL', `Cannot reverse ${removed} ${key} XP from ${previousTotal}`);
+    }
+    nextAttributeXp[key] = previousTotal - removed;
+
+    const fromAttributeLevel = rules.attribute.getLevelState(previousTotal).level;
+    const toAttributeLevel = rules.attribute.getLevelState(nextAttributeXp[key]).level;
+    if (toAttributeLevel < fromAttributeLevel) {
+      events.push({
+        type: 'attribute-level-down',
+        attributeKey: key,
+        fromLevel: fromAttributeLevel,
+        toLevel: toAttributeLevel,
+        levelsLost: fromAttributeLevel - toAttributeLevel,
       });
     }
   }

@@ -1,14 +1,15 @@
 import { router } from 'expo-router';
-import { ScrollText, Settings2, Swords } from 'lucide-react-native';
+import { Settings2 } from 'lucide-react-native';
 
+import { BossMiniPanel } from '@/components/bosses/boss-mini-panel';
 import { IconButton } from '@/components/common/icon-button';
 import { ScreenContainer } from '@/components/common/screen-container';
 import { ScreenHeader } from '@/components/common/screen-header';
 import { SectionLabel } from '@/components/common/section-label';
 import { AttributeOverview } from '@/components/player/attribute-overview';
 import { PlayerStatusPanel } from '@/components/player/player-status-panel';
+import { TodayQuestsPanel } from '@/components/quests/today-quests-panel';
 import { DevExperiencePanel } from '@/components/system/dev-experience-panel';
-import { LockedModulePanel } from '@/components/system/locked-module-panel';
 
 export default function DashboardScreen() {
   return (
@@ -30,20 +31,8 @@ export default function DashboardScreen() {
       <AttributeOverview entranceIndex={1} />
 
       <SectionLabel>Today</SectionLabel>
-      <LockedModulePanel
-        entranceIndex={2}
-        Icon={ScrollText}
-        title="Daily Quests"
-        description="Your daily quest board will appear here once the quest engine comes online."
-        status="Offline"
-      />
-      <LockedModulePanel
-        entranceIndex={3}
-        Icon={Swords}
-        title="Active Trial"
-        description="No trial in progress."
-        status="Idle"
-      />
+      <TodayQuestsPanel entranceIndex={2} />
+      <BossMiniPanel entranceIndex={3} />
       <DevExperiencePanel entranceIndex={4} />
     </ScreenContainer>
   );

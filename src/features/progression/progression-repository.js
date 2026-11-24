@@ -22,11 +22,18 @@ export async function readProgressionState(db, attributeKeys) {
   };
 }
 
-/** Totals recomputed from the XP ledger, the source of truth. */
+const SIGNED_XP = "CASE WHEN t.kind = 'reversal' THEN -{column} ELSE {column} END";
+
+/** Totals recomputed from the XP ledger (awards minus reversals), the source of truth. */
 export async function readLedgerTotals(db, attributeKeys) {
-  const player = await db.getFirstAsync('SELECT COALESCE(SUM(xp), 0) AS total_xp FROM xp_transactions');
+  const player = await db.getFirstAsync(
+    `SELECT COALESCE(SUM(${SIGNED_XP.replaceAll('{column}', 't.xp')}), 0) AS total_xp FROM xp_transactions t`,
+  );
   const rows = await db.getAllAsync(
-    'SELECT attribute_key, SUM(xp) AS total_xp FROM xp_transaction_attributes GROUP BY attribute_key',
+    `SELECT a.attribute_key, SUM(${SIGNED_XP.replaceAll('{column}', 'a.xp')}) AS total_xp
+     FROM xp_transaction_attributes a
+     JOIN xp_transactions t ON t.id = a.transaction_id
+     GROUP BY a.attribute_key`,
   );
   const ledgerByKey = Object.fromEntries(rows.map((row) => [row.attribute_key, row.total_xp]));
 
@@ -39,6 +46,52 @@ export async function readLedgerTotals(db, attributeKeys) {
 export async function hasXpTransaction(db, transactionId) {
   const row = await db.getFirstAsync('SELECT 1 AS found FROM xp_transactions WHERE id = ?', transactionId);
   return row != null;
+}
+
+/**
+ * A ledger entry with its attribute XP, or null.
+ * @returns {Promise<null | { id, source, xp, kind, attributeXp, reversedByTransactionId: string | null }>}
+ */
+export async function readXpTransaction(db, transactionId) {
+  const row = await db.getFirstAsync('SELECT id, source, xp, kind FROM xp_transactions WHERE id = ?', transactionId);
+  if (!row) return null;
+
+  const attributeRows = await db.getAllAsync(
+    'SELECT attribute_key, xp FROM xp_transaction_attributes WHERE transaction_id = ?',
+    transactionId,
+  );
+  const reversal = await db.getFirstAsync(
+    'SELECT id FROM xp_transactions WHERE reverses_transaction_id = ?',
+    transactionId,
+  );
+
+  return {
+    ...row,
+    attributeXp: Object.fromEntries(attributeRows.map((attributeRow) => [attributeRow.attribute_key, attributeRow.xp])),
+    reversedByTransactionId: reversal?.id ?? null,
+  };
+}
+
+/**
+ * Appends a reversal entry that cancels `award`. The unique index on `reverses_transaction_id`
+ * makes a second reversal of the same award fail.
+ */
+export async function insertXpReversal(db, award, reversalId) {
+  await db.runAsync(
+    "INSERT INTO xp_transactions (id, source, xp, kind, reverses_transaction_id) VALUES (?, ?, ?, 'reversal', ?)",
+    reversalId,
+    award.source,
+    award.xp,
+    award.id,
+  );
+  for (const [attributeKey, xp] of Object.entries(award.attributeXp)) {
+    await db.runAsync(
+      'INSERT INTO xp_transaction_attributes (transaction_id, attribute_key, xp) VALUES (?, ?, ?)',
+      reversalId,
+      attributeKey,
+      xp,
+    );
+  }
 }
 
 /** Appends a reward to the ledger. Throws on a duplicate id (primary key), as a last line of defence. */

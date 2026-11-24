@@ -2,11 +2,17 @@ import { useCallback } from 'react';
 
 import { useSystemNoticeStore } from '@/store/system-notice-store';
 
+import { AchievementCinematic } from './achievement-cinematic';
 import { AttributeGrowthBanner } from './attribute-growth-banner';
+import { BossDefeatCinematic } from './boss-defeat-cinematic';
 import { LevelUpOverlay } from './level-up-overlay';
+import { RewardBanner } from './reward-banner';
 
 const NOTICE_COMPONENTS = {
   'level-up': LevelUpOverlay,
+  'boss-defeated': BossDefeatCinematic,
+  'achievement-unlocked': AchievementCinematic,
+  'reward-banner': RewardBanner,
   'attribute-growth': AttributeGrowthBanner,
 };
 

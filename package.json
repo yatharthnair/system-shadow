@@ -60,6 +60,7 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/.expo/"
-    ]
+    ],
+    "globalSetup": "<rootDir>/src/test-utils/jest-timezone-setup.js"
   }
 }

@@ -63,3 +63,55 @@ export const Gradients = {
   panel: `linear-gradient(160deg, ${Palette.navy800} 0%, ${Palette.navy900} 60%, ${Palette.abyss} 100%)`,
   progressFill: `linear-gradient(90deg, ${Palette.electric500} 0%, ${Palette.cyan400} 100%)`,
 };
+
+/**
+ * Accent hues for quest categories. Kept muted and cool so they sit inside the blue system
+ * palette; each is used at low opacity for tiles and full strength only for icons.
+ */
+export const CategoryColors = {
+  fitness: '#FF6B6B',
+  nutrition: '#5BE39B',
+  family: '#FFB86B',
+  social: '#FF7EDB',
+  career: '#6FA4FF',
+  gaming: '#B18CFF',
+  livestreaming: '#FF5C8A',
+  recovery: '#3BE3FF',
+};
+
+/** Difficulty accents, rising in intensity. */
+export const DifficultyColors = {
+  easy: '#7FD1AE',
+  normal: '#6FA4FF',
+  hard: '#FFB84D',
+  elite: '#FF4D6D',
+};
+
+/** Appends an alpha channel to a #RRGGBB color, e.g. withAlpha('#3BE3FF', 0.15). */
+export function withAlpha(hexColor, alpha) {
+  const alphaHex = Math.round(alpha * 255).toString(16).padStart(2, '0');
+  return `${hexColor}${alphaHex}`;
+}
+
+/** Achievement tier accents. */
+export const TierColors = {
+  bronze: '#D08A5B',
+  silver: '#C9D6EA',
+  gold: '#FFC857',
+  platinum: '#A8F3FF',
+};
+
+/** Item rarity accents, used for borders and glows in the inventory. */
+export const RarityColors = {
+  common: '#8FA3C7',
+  rare: '#3BA7FF',
+  epic: '#B18CFF',
+  legendary: '#FFB84D',
+};
+
+/** Boss / danger accent for battle UI. */
+export const BossColors = {
+  primary: '#FF4D6D',
+  glow: 'rgba(255, 77, 109, 0.45)',
+  hpTrack: '#2A1220',
+};

@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/test-utils/create-test-database';
 
 import { buildProgressionSnapshot } from '../progression-engine';
 import * as progressionRepository from '../progression-repository';
-import { awardXp, loadProgression } from '../progression-service';
+import { awardXp, loadProgression, reverseXp } from '../progression-service';
 
 jest.mock('@/database/database', () => ({ getDatabase: jest.fn() }));
 
@@ -99,6 +99,59 @@ describe('awardXp', () => {
     ]);
     expect(results.map((result) => result.status)).toEqual(['rejected', 'fulfilled']);
     expect((await loadProgression()).state.totalXp).toBe(20);
+  });
+});
+
+describe('reverseXp', () => {
+  test('reverses an award, restoring totals, and keeps both ledger entries', async () => {
+    await awardXp({ id: 'base', source: 'quest', xp: 50, attributeXp: { strength: 5 } });
+    await awardXp({ id: 'big', source: 'quest', xp: 900, attributeXp: { strength: 60, charisma: 10 } });
+
+    const outcome = await reverseXp('big');
+
+    expect(outcome).toMatchObject({ status: 'reversed', transactionId: 'big', reversalId: 'reversal:big' });
+    expect(outcome.events).toContainEqual(expect.objectContaining({ type: 'player-level-down' }));
+    expect(outcome.state).toMatchObject({ totalXp: 50, attributeXp: { strength: 5, charisma: 0 } });
+    expect(await countRows('xp_transactions')).toBe(3);
+    expect((await loadProgression()).repaired).toBe(false);
+  });
+
+  test('reversing twice is a no-op the second time', async () => {
+    await awardXp({ id: 'a', source: 'quest', xp: 100 });
+    await reverseXp('a');
+    const second = await reverseXp('a');
+
+    expect(second.status).toBe('already-reversed');
+    expect(second.state.totalXp).toBe(0);
+    expect(await countRows('xp_transactions')).toBe(2);
+  });
+
+  test('concurrent reversals of the same award apply once', async () => {
+    await awardXp({ id: 'a', source: 'quest', xp: 100 });
+    const outcomes = await Promise.all([reverseXp('a'), reverseXp('a')]);
+    expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['already-reversed', 'reversed']);
+    expect((await loadProgression()).state.totalXp).toBe(0);
+  });
+
+  test('a reversed award id still cannot be re-awarded', async () => {
+    await awardXp({ id: 'a', source: 'quest', xp: 100 });
+    await reverseXp('a');
+    expect((await awardXp({ id: 'a', source: 'quest', xp: 100 })).status).toBe('duplicate');
+  });
+
+  test('rejects unknown transactions and reversals of reversals', async () => {
+    await expect(reverseXp('missing')).rejects.toMatchObject({ code: 'UNKNOWN_TRANSACTION' });
+    await awardXp({ id: 'a', source: 'quest', xp: 100 });
+    await reverseXp('a');
+    await expect(reverseXp('reversal:a')).rejects.toMatchObject({ code: 'NOT_REVERSIBLE' });
+  });
+
+  test('the database itself blocks a second reversal row', async () => {
+    await awardXp({ id: 'a', source: 'quest', xp: 100 });
+    await reverseXp('a');
+    await expect(
+      db.runAsync("INSERT INTO xp_transactions (id, source, xp, kind, reverses_transaction_id) VALUES ('x', 'q', 100, 'reversal', 'a')"),
+    ).rejects.toThrow(/UNIQUE/);
   });
 });
 

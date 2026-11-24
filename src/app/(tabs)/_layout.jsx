@@ -3,6 +3,7 @@ import { Crosshair, ScrollText, Swords, Trophy, UserRound } from 'lucide-react-n
 
 import { SystemTabBar } from '@/components/navigation/system-tab-bar';
 import { Colors } from '@/constants/theme';
+import { useQuestPeriodRollover } from '@/hooks/use-quest-period-rollover';
 
 const ICON_STROKE_WIDTH = 1.75;
 
@@ -18,6 +19,8 @@ function renderTabBar(props) {
 }
 
 export default function TabsLayout() {
+  useQuestPeriodRollover();
+
   return (
     <Tabs
       tabBar={renderTabBar}

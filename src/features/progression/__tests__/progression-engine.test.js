@@ -4,6 +4,7 @@ import {
   createInitialProgressionState,
   createProgressionRules,
   replayXpRewards,
+  reverseXpReward,
 } from '../progression-engine';
 import { createXpReward } from '../xp-reward';
 
@@ -133,5 +134,37 @@ describe('snapshot and replay', () => {
     let manySmall = createInitialProgressionState();
     for (let index = 0; index < 15; index += 1) manySmall = apply(manySmall, { xp: 100 }).state;
     expect(buildProgressionSnapshot(manySmall, rules)).toEqual(buildProgressionSnapshot(oneBigReward, rules));
+  });
+});
+
+describe('reverseXpReward', () => {
+  test('exactly restores the state before the reward', () => {
+    const before = apply(createInitialProgressionState(), { xp: 250, attributeXp: { strength: 15 } }).state;
+    const award = reward({ xp: 1234, attributeXp: { strength: 40, charisma: 12 } });
+    const after = applyXpReward(before, award, rules).state;
+
+    expect(reverseXpReward(after, award, rules).state).toEqual(before);
+  });
+
+  test('reports level, rank and attribute level-downs', () => {
+    const award = reward({ xp: 1000, attributeXp: { agility: 30 } }); // L1 → L5 (E → C), AGI L1 → L3
+    const after = applyXpReward(createInitialProgressionState(), award, rules).state;
+
+    expect(reverseXpReward(after, award, rules).events).toEqual([
+      { type: 'player-level-down', fromLevel: 5, toLevel: 1, levelsLost: 4 },
+      { type: 'rank-down', fromRank: 'C', toRank: 'E' },
+      { type: 'attribute-level-down', attributeKey: 'agility', fromLevel: 3, toLevel: 1, levelsLost: 2 },
+    ]);
+  });
+
+  test('refuses to reverse more XP than exists', () => {
+    const award = reward({ xp: 100 });
+    expect(() => reverseXpReward(createInitialProgressionState(), award, rules)).toThrow(
+      expect.objectContaining({ code: 'REVERSAL_EXCEEDS_TOTAL' }),
+    );
+    const attributeAward = reward({ attributeXp: { vitality: 5 } });
+    expect(() => reverseXpReward(createInitialProgressionState(), attributeAward, rules)).toThrow(
+      expect.objectContaining({ code: 'REVERSAL_EXCEEDS_TOTAL' }),
+    );
   });
 });

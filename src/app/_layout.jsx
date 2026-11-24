@@ -6,8 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { BootErrorView } from '@/components/system/boot-error-view';
 import { SystemNoticeHost } from '@/components/system/system-notice-host';
 import { Colors, FontFamily } from '@/constants/theme';
-import { useAppBootstrap } from '@/hooks/use-app-bootstrap';
-import { usePlayerStore } from '@/store/player-store';
+import { retryAppBootstrap, useAppBootstrap } from '@/hooks/use-app-bootstrap';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,10 +31,6 @@ const stackScreenOptions = {
   headerBackButtonDisplayMode: 'minimal',
 };
 
-function retryBootstrap() {
-  usePlayerStore.getState().hydrate();
-}
-
 export default function RootLayout() {
   const { isReady, error } = useAppBootstrap();
 
@@ -46,12 +41,26 @@ export default function RootLayout() {
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="light" />
       {error ? (
-        <BootErrorView error={error} onRetry={retryBootstrap} />
+        <BootErrorView error={error} onRetry={retryAppBootstrap} />
       ) : (
         <View style={styles.root}>
           <Stack screenOptions={stackScreenOptions}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+            <Stack.Screen name="quest/new" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="quest/[questId]" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="quest/history" options={{ title: 'Quest Log' }} />
+            <Stack.Screen name="inventory" options={{ title: 'Inventory' }} />
+            <Stack.Screen
+              name="item/[itemKey]"
+              options={{
+                presentation: 'formSheet',
+                headerShown: false,
+                sheetAllowedDetents: [0.55],
+                sheetGrabberVisible: true,
+                contentStyle: { backgroundColor: Colors.backgroundElevated },
+              }}
+            />
           </Stack>
           <SystemNoticeHost />
         </View>
