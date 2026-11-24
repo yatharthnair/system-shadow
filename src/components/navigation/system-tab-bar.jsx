@@ -3,16 +3,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BorderWidth, Colors, ComponentTokens, Glow, Gradients, Spacing } from '@/constants/theme';
 
+import { createTabPressHandlers } from './tab-press';
 import { TabBarButton } from './tab-bar-button';
 
 const { height, horizontalInset, bottomGap, radius } = ComponentTokens.tabBar;
 
 /**
  * Floating, glowing bottom navigation. Pass to `<Tabs tabBar={...} />`.
+ * Receives Expo Router's tab bar props: `{ state, descriptors, emitter, navigateToTab, insets }`.
  * Reads each screen's `title`, `tabBarLabel`, `tabBarIcon`, `tabBarAccessibilityLabel`
  * and `tabBarButtonTestID` options, so adding a tab only requires a new `<Tabs.Screen>`.
  */
-export function SystemTabBar({ state, descriptors, navigation }) {
+export function SystemTabBar({ state, descriptors, emitter, navigateToTab }) {
   const { bottom } = useSafeAreaInsets();
 
   return (
@@ -26,20 +28,7 @@ export function SystemTabBar({ state, descriptors, navigation }) {
           const label =
             typeof options.tabBarLabel === 'string' ? options.tabBarLabel : (options.title ?? route.name);
 
-          function handlePress() {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          }
-
-          function handleLongPress() {
-            navigation.emit({ type: 'tabLongPress', target: route.key });
-          }
+          const { onPress, onLongPress } = createTabPressHandlers({ route, isFocused, emitter, navigateToTab });
 
           return (
             <TabBarButton
@@ -48,8 +37,8 @@ export function SystemTabBar({ state, descriptors, navigation }) {
               accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
               renderIcon={options.tabBarIcon}
               isFocused={isFocused}
-              onPress={handlePress}
-              onLongPress={handleLongPress}
+              onPress={onPress}
+              onLongPress={onLongPress}
               testID={options.tabBarButtonTestID}
             />
           );

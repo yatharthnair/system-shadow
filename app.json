@@ -8,7 +8,8 @@
     "scheme": "systemshadow",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.yatharthnair.systemshadow"
     },
     "android": {
       "adaptiveIcon": {
